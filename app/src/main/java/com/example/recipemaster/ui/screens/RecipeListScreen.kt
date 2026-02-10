@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.recipemaster.ui.components.RecipeCard
 import com.example.recipemaster.ui.navigation.Routes
 import com.example.recipemaster.viewmodel.RecipeViewModel
 
@@ -53,7 +53,6 @@ fun RecipeListScreen(
 ) {
     // Collect recipes from ViewModel
     val recipes by viewModel.allRecipes.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -66,7 +65,6 @@ fun RecipeListScreen(
                     )
                 },
                 actions = {
-                    // Advanced search button
                     IconButton(onClick = { navController.navigate(Routes.SEARCH) }) {
                         Icon(
                             imageVector = Icons.Filled.Tune,
@@ -99,11 +97,7 @@ fun RecipeListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Category chips will be added in next commit
-
-            // Recipe list
             if (recipes.isEmpty()) {
-                // Empty state
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -125,12 +119,14 @@ fun RecipeListScreen(
                         items = recipes,
                         key = { recipe -> recipe.id }
                     ) { recipe ->
-                        // Recipe card will be implemented in next commit
-                        Text(
-                            text = recipe.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
+                        RecipeCard(
+                            recipe = recipe,
+                            onClick = {
+                                navController.navigate(Routes.recipeDetail(recipe.id))
+                            },
+                            onFavoriteClick = {
+                                viewModel.toggleFavorite(recipe.id, !recipe.isFavorite)
+                            }
                         )
                     }
                 }
