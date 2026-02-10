@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.recipemaster.ui.components.CategoryChips
 import com.example.recipemaster.ui.components.RecipeCard
 import com.example.recipemaster.ui.navigation.Routes
 import com.example.recipemaster.viewmodel.RecipeViewModel
@@ -38,8 +39,8 @@ import com.example.recipemaster.viewmodel.RecipeViewModel
  * Features:
  * - Scrollable list of recipe cards
  * - FAB for adding new recipes
- * - Search bar
- * - Category filters (will be added in next commit)
+ * - Category filter chips
+ * - Advanced search button
  *
  * @param navController Navigation controller for routing
  * @param viewModel Recipe view model
@@ -51,8 +52,8 @@ fun RecipeListScreen(
     navController: NavController,
     viewModel: RecipeViewModel
 ) {
-    // Collect recipes from ViewModel
-    val recipes by viewModel.allRecipes.collectAsState()
+    val filteredRecipes by viewModel.filteredRecipes.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
 
     Scaffold(
         topBar = {
@@ -97,13 +98,26 @@ fun RecipeListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (recipes.isEmpty()) {
+            // Category filter chips
+            CategoryChips(
+                selectedCategory = selectedCategory,
+                onCategorySelected = { category ->
+                    viewModel.filterByCategory(category)
+                }
+            )
+
+            // Recipe list
+            if (filteredRecipes.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No recipes yet.\nTap + to add your first recipe.",
+                        text = if (selectedCategory == "All") {
+                            "No recipes yet.\nTap + to add your first recipe."
+                        } else {
+                            "No recipes in $selectedCategory category."
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -116,7 +130,7 @@ fun RecipeListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(
-                        items = recipes,
+                        items = filteredRecipes,
                         key = { recipe -> recipe.id }
                     ) { recipe ->
                         RecipeCard(
