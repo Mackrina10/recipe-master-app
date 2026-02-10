@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -28,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,22 +69,12 @@ fun RecipeCard(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                if (recipe.imageUrl != null) {
-                    // Image will be loaded here in future commits
-                    Icon(
-                        imageVector = Icons.Filled.Restaurant,
-                        contentDescription = "Recipe image",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Restaurant,
-                        contentDescription = "No image",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Filled.Restaurant,
+                    contentDescription = if (recipe.imageUrl != null) "Recipe image" else "No image",
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
 
             Column(
@@ -190,14 +178,12 @@ fun RecipeCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Rating stars (will be implemented in next commit)
+                // Rating stars
                 if (recipe.rating > 0) {
-                    Text(
-                        text = "Rating: ${recipe.rating}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Spacer(modifier = Modifier.height(8.dp))
+                    RatingStars(
+                        rating = recipe.rating,
+                        starSize = 16.dp
                     )
                 }
             }
