@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,15 +46,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.recipemaster.data.entity.Recipe
 import com.example.recipemaster.ui.components.RatingBar
+import com.example.recipemaster.ui.components.TagChips
 import com.example.recipemaster.ui.navigation.Routes
 import com.example.recipemaster.viewmodel.RecipeViewModel
 import kotlinx.coroutines.flow.filterNotNull
 
 /**
- * Recipe detail screen showing full recipe information
- * Features interactive rating, favorite toggle, edit and delete
+ * Recipe detail screen with tags display
  *
- * @param recipeId Recipe ID to display
+ * @param recipeId Recipe ID
  * @param navController Navigation controller
  * @param viewModel Recipe view model
  * @author Heavenlight Mhally
@@ -133,7 +134,6 @@ fun RecipeDetailScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Image
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,14 +155,12 @@ fun RecipeDetailScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Recipe name
                     Text(
                         text = currentRecipe.name,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Category and difficulty badges
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -193,7 +191,6 @@ fun RecipeDetailScreen(
                         }
                     }
 
-                    // Time and servings
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(24.dp)
@@ -245,7 +242,6 @@ fun RecipeDetailScreen(
                         }
                     }
 
-                    // Interactive Rating
                     Column {
                         Text(
                             text = "Rate this recipe",
@@ -274,8 +270,12 @@ fun RecipeDetailScreen(
                         }
                     }
 
-                    // Description
+                    if (currentRecipe.getTagsList().isNotEmpty()) {
+                        TagChips(tags = currentRecipe.getTagsList())
+                    }
+
                     if (currentRecipe.description.isNotEmpty()) {
+                        HorizontalDivider()
                         Column {
                             Text(
                                 text = "Description",
@@ -290,8 +290,8 @@ fun RecipeDetailScreen(
                         }
                     }
 
-                    // Ingredients
                     if (currentRecipe.ingredients.isNotEmpty()) {
+                        HorizontalDivider()
                         Column {
                             Text(
                                 text = "Ingredients",
@@ -309,8 +309,8 @@ fun RecipeDetailScreen(
                         }
                     }
 
-                    // Instructions
                     if (currentRecipe.instructions.isNotEmpty()) {
+                        HorizontalDivider()
                         Column {
                             Text(
                                 text = "Instructions",
