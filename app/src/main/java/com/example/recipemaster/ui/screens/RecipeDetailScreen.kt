@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
@@ -23,6 +24,8 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,9 +53,12 @@ import com.example.recipemaster.ui.components.TagChips
 import com.example.recipemaster.ui.navigation.Routes
 import com.example.recipemaster.viewmodel.RecipeViewModel
 import kotlinx.coroutines.flow.filterNotNull
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
- * Recipe detail screen with tags display
+ * Recipe detail screen with mark as cooked functionality
  *
  * @param recipeId Recipe ID
  * @param navController Navigation controller
@@ -268,6 +274,40 @@ fun RecipeDetailScreen(
                                 )
                             }
                         }
+                    }
+
+                    if (currentRecipe.timesCooked > 0) {
+                        Column {
+                            Text(
+                                text = "Cooked ${currentRecipe.timesCooked} ${if (currentRecipe.timesCooked == 1) "time" else "times"}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            currentRecipe.lastCooked?.let { timestamp ->
+                                val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                Text(
+                                    text = "Last cooked: ${dateFormat.format(Date(timestamp))}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Button(
+                        onClick = { viewModel.markAsCooked(currentRecipe.id) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text("Mark as Cooked")
                     }
 
                     if (currentRecipe.getTagsList().isNotEmpty()) {
