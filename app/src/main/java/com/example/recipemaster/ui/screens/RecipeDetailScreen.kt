@@ -33,7 +33,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,21 +44,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.recipemaster.data.entity.Recipe
-import com.example.recipemaster.ui.components.RatingStars
+import com.example.recipemaster.ui.components.RatingBar
 import com.example.recipemaster.ui.navigation.Routes
 import com.example.recipemaster.viewmodel.RecipeViewModel
 import kotlinx.coroutines.flow.filterNotNull
 
 /**
  * Recipe detail screen showing full recipe information
- * Features:
- * - Image display
- * - Recipe name and metadata
- * - Rating display
- * - Ingredients list
- * - Instructions list
- * - Edit and delete buttons
- * - Favorite toggle
+ * Features interactive rating, favorite toggle, edit and delete
  *
  * @param recipeId Recipe ID to display
  * @param navController Navigation controller
@@ -75,7 +67,6 @@ fun RecipeDetailScreen(
 ) {
     var recipe by remember { mutableStateOf<Recipe?>(null) }
 
-    // Load recipe data
     LaunchedEffect(recipeId) {
         viewModel.repository.getRecipeById(recipeId)
             .filterNotNull()
@@ -254,18 +245,32 @@ fun RecipeDetailScreen(
                         }
                     }
 
-                    // Rating
-                    if (currentRecipe.rating > 0) {
+                    // Interactive Rating
+                    Column {
+                        Text(
+                            text = "Rate this recipe",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            RatingStars(rating = currentRecipe.rating, starSize = 24.dp)
-                            Text(
-                                text = String.format("%.1f", currentRecipe.rating),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                            RatingBar(
+                                rating = currentRecipe.rating,
+                                onRatingChanged = { newRating ->
+                                    viewModel.updateRating(currentRecipe.id, newRating)
+                                },
+                                starSize = 32.dp
                             )
+                            if (currentRecipe.rating > 0) {
+                                Text(
+                                    text = String.format("%.1f", currentRecipe.rating),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
 
