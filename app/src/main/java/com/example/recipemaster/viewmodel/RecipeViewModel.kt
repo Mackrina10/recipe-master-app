@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  * @property repository Recipe repository for data access
  * @author Heavenlight Mhally
  */
-class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
+class RecipeViewModel(val repository: RecipeRepository) : ViewModel() {
 
     // All recipes from database
     val allRecipes: StateFlow<List<Recipe>> = repository.allRecipes
@@ -50,7 +50,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
     val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
-        // Initially show all recipes
         viewModelScope.launch {
             allRecipes.collect { recipes ->
                 _filteredRecipes.value = recipes
@@ -58,10 +57,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Insert a new recipe
-     * @param recipe Recipe to add
-     */
     fun addRecipe(recipe: Recipe) {
         viewModelScope.launch {
             try {
@@ -76,10 +71,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Update an existing recipe
-     * @param recipe Recipe with updated data
-     */
     fun updateRecipe(recipe: Recipe) {
         viewModelScope.launch {
             try {
@@ -94,10 +85,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Delete a recipe
-     * @param recipe Recipe to delete
-     */
     fun deleteRecipe(recipe: Recipe) {
         viewModelScope.launch {
             try {
@@ -109,10 +96,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Delete recipe by ID
-     * @param id Recipe ID
-     */
     fun deleteRecipeById(id: Int) {
         viewModelScope.launch {
             try {
@@ -124,11 +107,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Toggle favorite status of a recipe
-     * @param recipeId Recipe ID
-     * @param isFavorite New favorite status
-     */
     fun toggleFavorite(recipeId: Int, isFavorite: Boolean) {
         viewModelScope.launch {
             try {
@@ -139,11 +117,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Update recipe rating
-     * @param recipeId Recipe ID
-     * @param rating New rating value
-     */
     fun updateRating(recipeId: Int, rating: Float) {
         viewModelScope.launch {
             try {
@@ -154,10 +127,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Mark recipe as cooked
-     * @param recipeId Recipe ID
-     */
     fun markAsCooked(recipeId: Int) {
         viewModelScope.launch {
             try {
@@ -168,11 +137,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Update recipe notes
-     * @param recipeId Recipe ID
-     * @param notes New notes text
-     */
     fun updateNotes(recipeId: Int, notes: String) {
         viewModelScope.launch {
             try {
@@ -183,10 +147,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Filter recipes by category
-     * @param category Category name or "All"
-     */
     fun filterByCategory(category: String) {
         _selectedCategory.value = category
         viewModelScope.launch {
@@ -202,10 +162,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Search recipes by query
-     * @param query Search string
-     */
     fun searchRecipes(query: String) {
         _searchQuery.value = query
         viewModelScope.launch {
@@ -221,9 +177,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Clear error message
-     */
     fun clearError() {
         _error.value = null
     }
