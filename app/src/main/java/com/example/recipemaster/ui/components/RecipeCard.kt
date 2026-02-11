@@ -28,18 +28,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.recipemaster.data.entity.Recipe
+import com.example.recipemaster.utils.HapticFeedback
 
 /**
- * Recipe card component for displaying recipe in list
- * Shows image, name, category, time, servings, rating, and favorite button
+ * Recipe card component with haptic feedback
  *
- * @param recipe Recipe data to display
- * @param onClick Callback when card is clicked
- * @param onFavoriteClick Callback when favorite button is clicked
+ * @param recipe Recipe data
+ * @param onClick Click callback
+ * @param onFavoriteClick Favorite toggle callback
  * @author Heavenlight Mhally
  */
 @Composable
@@ -49,10 +50,15 @@ fun RecipeCard(
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable {
+                HapticFeedback.performClick(view)
+                onClick()
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -61,7 +67,6 @@ fun RecipeCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Image placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -82,7 +87,6 @@ fun RecipeCard(
                     .fillMaxWidth()
                     .padding(12.dp)
             ) {
-                // Recipe name and favorite button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -98,7 +102,10 @@ fun RecipeCard(
                     )
 
                     IconButton(
-                        onClick = onFavoriteClick,
+                        onClick = {
+                            HapticFeedback.performClick(view)
+                            onFavoriteClick()
+                        },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
@@ -111,7 +118,6 @@ fun RecipeCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Category badge
                 Text(
                     text = recipe.category,
                     style = MaterialTheme.typography.labelSmall,
@@ -126,13 +132,11 @@ fun RecipeCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Time, difficulty, and servings row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Time
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -150,7 +154,6 @@ fun RecipeCard(
                         )
                     }
 
-                    // Difficulty
                     if (recipe.difficulty.isNotEmpty()) {
                         Text(
                             text = recipe.difficulty,
@@ -159,7 +162,6 @@ fun RecipeCard(
                         )
                     }
 
-                    // Servings
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -178,7 +180,6 @@ fun RecipeCard(
                     }
                 }
 
-                // Rating stars
                 if (recipe.rating > 0) {
                     Spacer(modifier = Modifier.height(8.dp))
                     RatingStars(
