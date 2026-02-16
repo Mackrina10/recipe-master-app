@@ -11,196 +11,112 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for Recipe entity
- * Provides all database operations for recipes
- * Uses Flow for reactive queries that automatically update UI
+ * Contains all database operations for recipes
  *
  * @author Heavenlight Mhally
  */
 @Dao
 interface RecipeDao {
 
-    // CREATE operations
-
-    /**
-     * Insert a new recipe into the database
-     * @param recipe Recipe to insert
-     * @return Row ID of inserted recipe
-     */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(recipe: Recipe): Long
-
-    /**
-     * Insert multiple recipes at once
-     * @param recipes List of recipes to insert
-     */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(recipes: List<Recipe>)
-
-    // READ operations
-
-    /**
-     * Get all recipes as a Flow (reactive)
-     * Automatically updates when database changes
-     * @return Flow of all recipes
-     */
-    @Query("SELECT * FROM recipes ORDER BY dateCreated DESC")
+    @Query("SELECT * FROM recipes ORDER BY createdAt DESC")
     fun getAllRecipes(): Flow<List<Recipe>>
 
-    /**
-     * Get a single recipe by ID
-     * @param recipeId Recipe ID
-     * @return Flow of recipe or null
-     */
-    @Query("SELECT * FROM recipes WHERE id = :recipeId")
-    fun getRecipeById(recipeId: Int): Flow<Recipe?>
+    @Query("SELECT * FROM recipes ORDER BY name ASC")
+    fun getAllRecipesSortedByNameAsc(): Flow<List<Recipe>>
 
-    /**
-     * Get all favorite recipes
-     * @return Flow of favorite recipes
-     */
-    @Query("SELECT * FROM recipes WHERE isFavorite = 1 ORDER BY dateModified DESC")
-    fun getFavoriteRecipes(): Flow<List<Recipe>>
+    @Query("SELECT * FROM recipes ORDER BY name DESC")
+    fun getAllRecipesSortedByNameDesc(): Flow<List<Recipe>>
 
-    /**
-     * Get recipes by category
-     * @param category Category name
-     * @return Flow of recipes in that category
-     */
-    @Query("SELECT * FROM recipes WHERE category = :category ORDER BY name ASC")
+    @Query("SELECT * FROM recipes ORDER BY totalTimeMin ASC")
+    fun getAllRecipesSortedByTimeAsc(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY totalTimeMin DESC")
+    fun getAllRecipesSortedByTimeDesc(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY rating DESC")
+    fun getAllRecipesSortedByRatingDesc(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY rating ASC")
+    fun getAllRecipesSortedByRatingAsc(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY createdAt DESC")
+    fun getAllRecipesSortedByRecent(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY createdAt ASC")
+    fun getAllRecipesSortedByOldest(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY timesCooked DESC")
+    fun getAllRecipesSortedByCookedMost(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes ORDER BY timesCooked ASC")
+    fun getAllRecipesSortedByCookedLeast(): Flow<List<Recipe>>
+
+    @Query("SELECT * FROM recipes WHERE id = :id")
+    fun getRecipeById(id: Int): Flow<Recipe?>
+
+    @Query("SELECT * FROM recipes WHERE category = :category ORDER BY createdAt DESC")
     fun getRecipesByCategory(category: String): Flow<List<Recipe>>
 
-    /**
-     * Search recipes by name or ingredients
-     * @param query Search query
-     * @return Flow of matching recipes
-     */
+    @Query("SELECT * FROM recipes WHERE isFavorite = 1 ORDER BY createdAt DESC")
+    fun getFavoriteRecipes(): Flow<List<Recipe>>
+
     @Query("""
         SELECT * FROM recipes 
         WHERE name LIKE '%' || :query || '%' 
         OR ingredients LIKE '%' || :query || '%'
         OR tags LIKE '%' || :query || '%'
-        ORDER BY name ASC
+        OR category LIKE '%' || :query || '%'
+        ORDER BY createdAt DESC
     """)
     fun searchRecipes(query: String): Flow<List<Recipe>>
 
-    /**
-     * Get recipes with cooking history (timesCooked > 0)
-     * Sorted by most recently cooked
-     * @return Flow of cooked recipes
-     */
-    @Query("SELECT * FROM recipes WHERE timesCooked > 0 ORDER BY lastCooked DESC")
-    fun getCookedRecipes(): Flow<List<Recipe>>
+    @Query("""
+        SELECT * FROM recipes 
+        WHERE (:categories IS NULL OR category IN (:categories))
+        AND (:difficulties IS NULL OR difficulty IN (:difficulties))
+        AND totalTimeMin BETWEEN :minTime AND :maxTime
+        ORDER BY createdAt DESC
+    """)
+    fun filterRecipes(
+        categories: List<String>?,
+        difficulties: List<String>?,
+        minTime: Int,
+        maxTime: Int
+    ): Flow<List<Recipe>>
 
-    // UPDATE operations
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(recipe: Recipe): Long
 
-    /**
-     * Update an existing recipe
-     * @param recipe Recipe with updated values
-     */
     @Update
     suspend fun update(recipe: Recipe)
 
-    /**
-     * Toggle favorite status of a recipe
-     * @param recipeId Recipe ID
-     * @param isFavorite New favorite status
-     */
-    @Query("UPDATE recipes SET isFavorite = :isFavorite, dateModified = :timestamp WHERE id = :recipeId")
-    suspend fun updateFavoriteStatus(recipeId: Int, isFavorite: Boolean, timestamp: Long = System.currentTimeMillis())
-
-    /**
-     * Update rating of a recipe
-     * @param recipeId Recipe ID
-     * @param rating New rating (0-5)
-     */
-    @Query("UPDATE recipes SET rating = :rating, dateModified = :timestamp WHERE id = :recipeId")
-    suspend fun updateRating(recipeId: Int, rating: Float, timestamp: Long = System.currentTimeMillis())
-
-    /**
-     * Increment times cooked counter and update last cooked timestamp
-     * @param recipeId Recipe ID
-     */
-    @Query("UPDATE recipes SET timesCooked = timesCooked + 1, lastCooked = :timestamp, dateModified = :timestamp WHERE id = :recipeId")
-    suspend fun markAsCooked(recipeId: Int, timestamp: Long = System.currentTimeMillis())
-
-    /**
-     * Update recipe notes
-     * @param recipeId Recipe ID
-     * @param notes New notes text
-     */
-    @Query("UPDATE recipes SET notes = :notes, dateModified = :timestamp WHERE id = :recipeId")
-    suspend fun updateNotes(recipeId: Int, notes: String, timestamp: Long = System.currentTimeMillis())
-
-    // DELETE operations
-
-    /**
-     * Delete a recipe
-     * @param recipe Recipe to delete
-     */
     @Delete
     suspend fun delete(recipe: Recipe)
 
-    /**
-     * Delete recipe by ID
-     * @param recipeId Recipe ID
-     */
-    @Query("DELETE FROM recipes WHERE id = :recipeId")
-    suspend fun deleteById(recipeId: Int)
+    @Query("DELETE FROM recipes WHERE id = :id")
+    suspend fun deleteById(id: Int)
 
-    /**
-     * Delete all recipes (use with caution)
-     */
-    @Query("DELETE FROM recipes")
-    suspend fun deleteAll()
+    @Query("UPDATE recipes SET isFavorite = :isFavorite WHERE id = :id")
+    suspend fun toggleFavorite(id: Int, isFavorite: Boolean)
 
-    /**
-     * Delete multiple recipes by IDs
-     * @param recipeIds List of recipe IDs to delete
-     */
-    @Query("DELETE FROM recipes WHERE id IN (:recipeIds)")
-    suspend fun deleteByIds(recipeIds: List<Int>)
+    @Query("UPDATE recipes SET rating = :rating WHERE id = :id")
+    suspend fun updateRating(id: Int, rating: Float)
 
-    // STATISTICS queries
+    @Query("UPDATE recipes SET timesCooked = timesCooked + 1, lastCooked = :timestamp WHERE id = :id")
+    suspend fun markAsCooked(id: Int, timestamp: Long)
 
-    /**
-     * Get total count of recipes
-     * @return Flow of recipe count
-     */
+    @Query("UPDATE recipes SET notes = :notes WHERE id = :id")
+    suspend fun updateNotes(id: Int, notes: String)
+
     @Query("SELECT COUNT(*) FROM recipes")
-    fun getTotalRecipeCount(): Flow<Int>
+    suspend fun getRecipeCount(): Int
 
-    /**
-     * Get count of favorite recipes
-     * @return Flow of favorite count
-     */
     @Query("SELECT COUNT(*) FROM recipes WHERE isFavorite = 1")
-    fun getFavoriteCount(): Flow<Int>
+    suspend fun getFavoriteCount(): Int
 
-    /**
-     * Get average rating across all recipes
-     * @return Flow of average rating
-     */
     @Query("SELECT AVG(rating) FROM recipes WHERE rating > 0")
-    fun getAverageRating(): Flow<Float?>
+    suspend fun getAverageRating(): Float?
 
-    /**
-     * Get average cooking time across all recipes
-     * @return Flow of average total time in minutes
-     */
-    @Query("SELECT AVG(totalTimeMin) FROM recipes WHERE totalTimeMin > 0")
-    fun getAverageCookingTime(): Flow<Float?>
-
-    /**
-     * Get total times all recipes have been cooked
-     * @return Flow of total cooked count
-     */
     @Query("SELECT SUM(timesCooked) FROM recipes")
-    fun getTotalTimesCooked(): Flow<Int?>
-
-    /**
-     * Get count of recipes by category
-     * @return Flow of map (category name -> count)
-     */
-    @Query("SELECT category, COUNT(*) as count FROM recipes GROUP BY category")
-    fun getRecipeCountByCategory(): Flow<Map<String, Int>>
+    suspend fun getTotalTimesCooked(): Int
 }

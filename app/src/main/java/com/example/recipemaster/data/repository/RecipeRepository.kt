@@ -5,143 +5,90 @@ import com.example.recipemaster.data.entity.Recipe
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Repository class for Recipe operations
- * Provides a clean API for accessing recipe data
- * Acts as single source of truth between ViewModel and Database
+ * Repository for Recipe data operations
+ * Abstracts data source from ViewModel
  *
- * @property recipeDao Data Access Object for recipes
+ * @property recipeDao Recipe DAO
  * @author Heavenlight Mhally
  */
 class RecipeRepository(private val recipeDao: RecipeDao) {
 
-    // All recipes as Flow (automatically updates UI)
     val allRecipes: Flow<List<Recipe>> = recipeDao.getAllRecipes()
-    val favoriteRecipes: Flow<List<Recipe>> = recipeDao.getFavoriteRecipes()
-    val cookedRecipes: Flow<List<Recipe>> = recipeDao.getCookedRecipes()
 
-    // Statistics
-    val totalRecipeCount: Flow<Int> = recipeDao.getTotalRecipeCount()
-    val favoriteCount: Flow<Int> = recipeDao.getFavoriteCount()
-    val averageRating: Flow<Float?> = recipeDao.getAverageRating()
-    val averageCookingTime: Flow<Float?> = recipeDao.getAverageCookingTime()
-    val totalTimesCooked: Flow<Int?> = recipeDao.getTotalTimesCooked()
+    fun getAllRecipesSortedByNameAsc(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByNameAsc()
 
-    /**
-     * Get a single recipe by ID
-     * @param id Recipe ID
-     * @return Flow of Recipe or null
-     */
-    fun getRecipeById(id: Int): Flow<Recipe?> {
-        return recipeDao.getRecipeById(id)
-    }
+    fun getAllRecipesSortedByNameDesc(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByNameDesc()
 
-    /**
-     * Get recipes by category
-     * @param category Category name
-     * @return Flow of recipes
-     */
-    fun getRecipesByCategory(category: String): Flow<List<Recipe>> {
-        return recipeDao.getRecipesByCategory(category)
-    }
+    fun getAllRecipesSortedByTimeAsc(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByTimeAsc()
 
-    /**
-     * Search recipes by query
-     * @param query Search string
-     * @return Flow of matching recipes
-     */
-    fun searchRecipes(query: String): Flow<List<Recipe>> {
-        return recipeDao.searchRecipes(query)
-    }
+    fun getAllRecipesSortedByTimeDesc(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByTimeDesc()
 
-    /**
-     * Insert a new recipe
-     * @param recipe Recipe to insert
-     * @return Row ID of inserted recipe
-     */
-    suspend fun insert(recipe: Recipe): Long {
-        return recipeDao.insert(recipe)
-    }
+    fun getAllRecipesSortedByRatingDesc(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByRatingDesc()
 
-    /**
-     * Insert multiple recipes
-     * @param recipes List of recipes
-     */
-    suspend fun insertAll(recipes: List<Recipe>) {
-        recipeDao.insertAll(recipes)
-    }
+    fun getAllRecipesSortedByRatingAsc(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByRatingAsc()
 
-    /**
-     * Update an existing recipe
-     * @param recipe Recipe with updated data
-     */
-    suspend fun update(recipe: Recipe) {
-        recipeDao.update(recipe.copy(dateModified = System.currentTimeMillis()))
-    }
+    fun getAllRecipesSortedByRecent(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByRecent()
 
-    /**
-     * Delete a recipe
-     * @param recipe Recipe to delete
-     */
-    suspend fun delete(recipe: Recipe) {
-        recipeDao.delete(recipe)
-    }
+    fun getAllRecipesSortedByOldest(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByOldest()
 
-    /**
-     * Delete recipe by ID
-     * @param id Recipe ID
-     */
-    suspend fun deleteById(id: Int) {
-        recipeDao.deleteById(id)
-    }
+    fun getAllRecipesSortedByCookedMost(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByCookedMost()
 
-    /**
-     * Delete multiple recipes
-     * @param ids List of recipe IDs
-     */
-    suspend fun deleteByIds(ids: List<Int>) {
-        recipeDao.deleteByIds(ids)
-    }
+    fun getAllRecipesSortedByCookedLeast(): Flow<List<Recipe>> =
+        recipeDao.getAllRecipesSortedByCookedLeast()
 
-    /**
-     * Toggle favorite status
-     * @param id Recipe ID
-     * @param isFavorite New favorite status
-     */
-    suspend fun toggleFavorite(id: Int, isFavorite: Boolean) {
-        recipeDao.updateFavoriteStatus(id, isFavorite)
-    }
+    fun getRecipeById(id: Int): Flow<Recipe?> = recipeDao.getRecipeById(id)
 
-    /**
-     * Update recipe rating
-     * @param id Recipe ID
-     * @param rating New rating (0-5)
-     */
-    suspend fun updateRating(id: Int, rating: Float) {
+    fun getRecipesByCategory(category: String): Flow<List<Recipe>> =
+        recipeDao.getRecipesByCategory(category)
+
+    fun getFavoriteRecipes(): Flow<List<Recipe>> = recipeDao.getFavoriteRecipes()
+
+    fun searchRecipes(query: String): Flow<List<Recipe>> =
+        recipeDao.searchRecipes(query)
+
+    fun filterRecipes(
+        categories: List<String>?,
+        difficulties: List<String>?,
+        minTime: Int,
+        maxTime: Int
+    ): Flow<List<Recipe>> = recipeDao.filterRecipes(
+        categories, difficulties, minTime, maxTime
+    )
+
+    suspend fun insert(recipe: Recipe): Long = recipeDao.insert(recipe)
+
+    suspend fun update(recipe: Recipe) = recipeDao.update(recipe)
+
+    suspend fun delete(recipe: Recipe) = recipeDao.delete(recipe)
+
+    suspend fun deleteById(id: Int) = recipeDao.deleteById(id)
+
+    suspend fun toggleFavorite(id: Int, isFavorite: Boolean) =
+        recipeDao.toggleFavorite(id, isFavorite)
+
+    suspend fun updateRating(id: Int, rating: Float) =
         recipeDao.updateRating(id, rating)
-    }
 
-    /**
-     * Mark recipe as cooked
-     * Increments counter and updates timestamp
-     * @param id Recipe ID
-     */
-    suspend fun markAsCooked(id: Int) {
-        recipeDao.markAsCooked(id)
-    }
+    suspend fun markAsCooked(id: Int) =
+        recipeDao.markAsCooked(id, System.currentTimeMillis())
 
-    /**
-     * Update recipe notes
-     * @param id Recipe ID
-     * @param notes New notes text
-     */
-    suspend fun updateNotes(id: Int, notes: String) {
+    suspend fun updateNotes(id: Int, notes: String) =
         recipeDao.updateNotes(id, notes)
-    }
 
-    /**
-     * Delete all recipes
-     */
-    suspend fun deleteAll() {
-        recipeDao.deleteAll()
-    }
+    suspend fun getRecipeCount(): Int = recipeDao.getRecipeCount()
+
+    suspend fun getFavoriteCount(): Int = recipeDao.getFavoriteCount()
+
+    suspend fun getAverageRating(): Float = recipeDao.getAverageRating() ?: 0f
+
+    suspend fun getTotalTimesCooked(): Int = recipeDao.getTotalTimesCooked()
 }

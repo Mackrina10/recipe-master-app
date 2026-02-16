@@ -3,6 +3,7 @@ package com.example.recipemaster.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.recipemaster.data.entity.Recipe
+import com.example.recipemaster.data.entity.SortOption
 import com.example.recipemaster.data.repository.RecipeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,16 +13,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for Recipe operations
- * Manages UI state and business logic for recipes
- * Uses StateFlow for reactive UI updates
+ * ViewModel for Recipe operations with sorting
  *
- * @property repository Recipe repository for data access
+ * @property repository Recipe repository
  * @author Heavenlight Mhally
  */
 class RecipeViewModel(val repository: RecipeRepository) : ViewModel() {
 
-    // All recipes from database
+    private val _currentSortOption = MutableStateFlow(SortOption.RECENT)
+    val currentSortOption: StateFlow<SortOption> = _currentSortOption.asStateFlow()
+
     val allRecipes: StateFlow<List<Recipe>> = repository.allRecipes
         .stateIn(
             scope = viewModelScope,
@@ -29,23 +30,18 @@ class RecipeViewModel(val repository: RecipeRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    // Filtered/searched recipes
     private val _filteredRecipes = MutableStateFlow<List<Recipe>>(emptyList())
     val filteredRecipes: StateFlow<List<Recipe>> = _filteredRecipes.asStateFlow()
 
-    // Selected category filter
     private val _selectedCategory = MutableStateFlow("All")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    // Search query
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    // Loading state
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // Error state
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -151,9 +147,7 @@ class RecipeViewModel(val repository: RecipeRepository) : ViewModel() {
         _selectedCategory.value = category
         viewModelScope.launch {
             if (category == "All") {
-                allRecipes.collect { recipes ->
-                    _filteredRecipes.value = recipes
-                }
+                applySorting(_currentSortOption.value)
             } else {
                 repository.getRecipesByCategory(category).collect { recipes ->
                     _filteredRecipes.value = recipes
@@ -166,13 +160,50 @@ class RecipeViewModel(val repository: RecipeRepository) : ViewModel() {
         _searchQuery.value = query
         viewModelScope.launch {
             if (query.isBlank()) {
-                allRecipes.collect { recipes ->
-                    _filteredRecipes.value = recipes
-                }
+                applySorting(_currentSortOption.value)
             } else {
                 repository.searchRecipes(query).collect { recipes ->
                     _filteredRecipes.value = recipes
                 }
+            }
+        }
+    }
+
+    fun applySorting(sortOption: SortOption) {
+        _currentSortOption.value = sortOption
+        viewModelScope.launch {
+            val flow = when (sortOption) {
+                SortOption.NAME_ASC -> repository.getAllRecipesSortedByNameAsc()
+                SortOption.NAME_DESC -> repository.getAllRecipesSortedByNameDesc()
+                SortOption.TIME_ASC -> repository.getAllRecipesSortedByTimeAsc()
+                SortOption.TIME_DESC -> repository.getAllRecipesSortedByTimeDesc()
+                SortOption.RATING_DESC -> repository.getAllRecipesSortedByRatingDesc()
+                SortOption.RATING_ASC -> repository.getAllRecipesSortedByRatingAsc()
+                SortOption.RECENT -> repository.getAllRecipesSortedByRecent()
+                SortOption.OLDEST -> repository.getAllRecipesSortedByOldest()
+                SortOption.COOKED_MOST -> repository.getAllRecipesSortedByCookedMost()
+                SortOption.COOKED_LEAST -> repository.getAllRecipesSortedByCookedLeast()
+            }
+
+            flow.collect { recipes ->
+                _filteredRecipes.value = recipes
+            }
+        }
+    }
+
+    fun applyFilters(
+        categories: List<String>,
+        difficulties: List<String>,
+        timeRange: ClosedFloatingPointRange<Float>
+    ) {
+        viewModelScope.launch {
+            repository.filterRecipes(
+                categories = if (categories.isEmpty()) null else categories,
+                difficulties = if (difficulties.isEmpty()) null else difficulties,
+                minTime = timeRange.start.toInt(),
+                maxTime = timeRange.endInclusive.toInt()
+            ).collect { recipes ->
+                _filteredRecipes.value = recipes
             }
         }
     }
