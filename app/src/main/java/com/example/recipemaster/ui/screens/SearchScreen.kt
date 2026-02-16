@@ -3,13 +3,16 @@ package com.example.recipemaster.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,27 +23,28 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.recipemaster.ui.components.EmptyState
+import com.example.recipemaster.ui.components.FilterBottomSheet
 import com.example.recipemaster.ui.components.RecipeCard
+import com.example.recipemaster.ui.components.SortMenu
 import com.example.recipemaster.ui.navigation.Routes
 import com.example.recipemaster.viewmodel.RecipeViewModel
+import kotlinx.coroutines.launch
 
 /**
- * Advanced search screen with real-time filtering
- * Features:
- * - SearchBar with clear button
- * - Real-time search results
- * - Empty state for no results
+ * Advanced search screen with filters and sorting
  *
  * @param navController Navigation controller
  * @param viewModel Recipe view model
@@ -55,6 +59,11 @@ fun SearchScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     val searchResults by viewModel.filteredRecipes.collectAsState()
+    val currentSort by viewModel.currentSortOption.collectAsState()
+
+    var showFilterSheet by remember { mutableStateOf(false) }
+    val filterSheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -73,10 +82,25 @@ fun SearchScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.FilterList,
+                            contentDescription = "Filter"
+                        )
+                    }
+                    SortMenu(
+                        currentSort = currentSort,
+                        onSortSelected = { sortOption ->
+                            viewModel.applySorting(sortOption)
+                        }
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -118,9 +142,11 @@ fun SearchScreen(
                         }
                     }
                 },
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                // Search suggestions can be added here
+                // Empty suggestions for now
             }
 
             if (searchQuery.isEmpty()) {
@@ -157,6 +183,21 @@ fun SearchScreen(
                     }
                 }
             }
+        }
+
+        if (showFilterSheet) {
+            FilterBottomSheet(
+                sheetState = filterSheetState,
+                onDismiss = {
+                    scope.launch {
+                        filterSheetState.hide()
+                        showFilterSheet = false
+                    }
+                },
+                onApplyFilters = { categories, difficulties, timeRange ->
+                    viewModel.applyFilters(categories, difficulties, timeRange)
+                }
+            )
         }
     }
 }
